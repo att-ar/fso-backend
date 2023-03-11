@@ -1,7 +1,24 @@
 const express = require("express");
 const app = express();
+const morgan = require("morgan");
 //
+
+// making a morgan token for logging the data sent in POST requests
+const onlyPostData = (request, response) => {
+    if (request.method === "POST") {
+        return JSON.stringify(request.body);
+    }
+};
+morgan.token("postData", (request, response) =>
+    onlyPostData(request, response)
+);
+
 app.use(express.json());
+app.use(
+    morgan(
+        ":method :url :status :res[content-length] - :response-time ms :postData"
+    )
+);
 
 let persons = [
     {
