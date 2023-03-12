@@ -13,6 +13,7 @@ morgan.token("postData", (request, response) =>
     onlyPostData(request, response)
 );
 
+app.use(express.static("build"));
 app.use(express.json());
 app.use(
     morgan(
