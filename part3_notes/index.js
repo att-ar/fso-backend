@@ -16,9 +16,10 @@ const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: "unknown endpoint" });
 };
 
+app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
-app.use(cors());
+app.use(express.static("build"));
 
 let notes = [
     {
@@ -87,6 +88,7 @@ app.post("/api/notes", (request, response) => {
     const note = {
         content: body.content,
         important: body.important || false,
+        date: new Date(),
         id: generateID(),
     };
     notes = notes.concat(note);
