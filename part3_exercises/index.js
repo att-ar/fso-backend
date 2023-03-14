@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
+const path = require("path");
 
 // making a morgan token for logging the data sent in POST requests
 const onlyPostData = (request, response) => {
@@ -34,6 +35,7 @@ app.use(
         ":method :url :status :res[content-length] - :response-time ms :postData"
     )
 );
+app.use(express.static(path.join(__dirname, "build")));
 
 let persons = [
     {
@@ -57,6 +59,10 @@ let persons = [
         number: "39-23-6423122",
     },
 ];
+
+app.get("/", function (req, res) {
+    res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 app.get("/api/persons", (request, response) => {
     response.json(persons);
