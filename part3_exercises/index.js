@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
-//
+const cors = require("cors");
 
 // making a morgan token for logging the data sent in POST requests
 const onlyPostData = (request, response) => {
@@ -13,8 +13,22 @@ morgan.token("postData", (request, response) =>
     onlyPostData(request, response)
 );
 
-app.use(express.static("build"));
+const requestLogger = (request, response, next) => {
+    console.log("Method:", request.method);
+    console.log("Path:  ", request.path);
+    console.log("Body:  ", request.body);
+    console.log("---");
+    next();
+};
+
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: "unknown endpoint" });
+};
+
+//make sure to use cors(), not cors...
+app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 app.use(
     morgan(
         ":method :url :status :res[content-length] - :response-time ms :postData"
@@ -104,6 +118,8 @@ app.post("/api/persons", (request, response) => {
 
     response.json(person);
 });
+
+app.use(unknownEndpoint);
 
 const PORT = 3001;
 app.listen(PORT, () => {
