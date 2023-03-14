@@ -35,6 +35,10 @@ if (process.argv.length === 3) {
     try {
         const name = process.argv[3];
         const number = process.argv[4];
+        if (number === undefined) {
+            console.log("Missing name or number");
+            process.exit(1);
+        }
 
         const person = new Person({
             name,
@@ -46,7 +50,6 @@ if (process.argv.length === 3) {
             mongoose.connection.close();
         });
     } catch (error) {
-        console.log("Missing name or number");
         console.error(error);
     }
 }
