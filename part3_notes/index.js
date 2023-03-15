@@ -1,6 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
+
+const Note = require("./models/note");
 
 const path = require("path");
 
@@ -43,8 +46,16 @@ app.get("/", function (req, res) {
     res.sendFile(path.join(__dirname, "frontend/build", "index.html"));
 });
 
-app.get("/api/notes", (req, res) => {
-    res.json(notes);
+app.get("/api/notes", (request, response) => {
+    Note.find({}).then((notes) => {
+        response.json(notes);
+    });
+});
+
+app.get("/api/notes/:id", (request, response) => {
+    Note.findById(request.params.id).then((note) => {
+        response.json(note);
+    });
 });
 
 const generateId = () => {
@@ -55,60 +66,54 @@ const generateId = () => {
 app.post("/api/notes", (request, response) => {
     const body = request.body;
 
-    //the return is important to avoid using an empty note
-    if (!body.content) {
-        return response.status(400).json({
-            error: "content missing",
-        });
+    if (body.content === undefined) {
+        return response.status(400).json({ error: "content missing" });
     }
 
-    const note = {
+    const note = new Note({
         content: body.content,
         important: body.important || false,
-        id: generateId(),
-    };
+    });
 
-    notes = notes.concat(note);
-
-    response.json(note);
+    note.save().then((savedNote) => {
+        response.json(savedNote);
+    });
 });
 
 app.put("/api/notes/:id", (request, response) => {
     // the id below is from the object not the url
-    const id = Number(request.params.id);
-    const note = notes.findIndex((note) => note.id === id);
+    // const id = Number(request.params.id);
+    const id = request.params.id;
+    // no longer a number with MongoDB
 
-    if (note >= 0) {
-        notes[note] = request.body;
-        response.json(notes[note]);
-    } else {
-        response.status(404).send("Note id does note exist.").end();
-    }
-});
-
-app.get("/api/notes/:id", (request, response) => {
-    const id = Number(request.params.id);
-    const note = notes.find((note) => note.id === id);
-
-    if (note) {
-        response.json(note);
-    } else {
-        response.status(404).end();
-    }
-
-    response.json(note);
+    Note.replaceOne({ _id: id }, { ...request.body })
+        .then((note) => {
+            response.json(note);
+        })
+        .catch((error) => {
+            console.log("ID does not exist");
+            console.error(error.message);
+        });
 });
 
 app.delete("/api/notes/:id", (request, response) => {
-    const id = Number(request.params.id);
-    notes = notes.filter((note) => note.id !== id);
+    // const id = Number(request.params.id);
+    const id = request.params.id;
+    // no longer a number with MongoDB
 
-    response.status(204).end();
+    Note.deleteOne({ _id: id })
+        .then((deleteCount) => {
+            response.json(deleteCount);
+        })
+        .catch((error) => {
+            console.log("ID does not exist");
+            console.error(error.message);
+        });
 });
 
 app.use(unknownEndpoint);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
