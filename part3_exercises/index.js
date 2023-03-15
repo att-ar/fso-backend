@@ -27,10 +27,6 @@ const requestLogger = (request, response, next) => {
     next();
 };
 
-const unknownEndpoint = (request, response) => {
-    response.status(404).send({ error: "unknown endpoint" });
-};
-
 //make sure to use cors(), not cors...
 app.use(cors());
 app.use(express.json());
@@ -94,29 +90,37 @@ app.get("/api/persons/info", (request, response) => {
 });
 
 app.get("/api/persons/:id", (request, response) => {
-    Person.findById(request.params.id).then((person) => {
-        response.json(person);
-    });
-});
-
-app.delete("/api/persons/:id", (request, response) => {
-    // const id = Number(request.params.id);
-    const id = request.params.id;
-    // no longer a number with MongoDB
-
-    Person.deleteOne({ _id: id })
-        .then((deleteCount) => {
-            response.json(deleteCount);
+    Person.findById(request.params.id)
+        .then((person) => {
+            response.json(person);
         })
-        .catch((error) => {
-            console.log("ID does not exist");
-            console.error(error.message);
-        });
+        .catch((error) => next(error));
 });
 
-const generateID = () => {
-    return Math.floor(Math.random() * 100000);
-};
+// app.delete("/api/persons/:id", (request, response) => {
+//     // const id = Number(request.params.id);
+//     const id = request.params.id;
+//     // no longer a number with MongoDB
+
+//     Person.deleteOne({ _id: id })
+//         .then((deleteCount) => {
+//             response.json(deleteCount);
+//         })
+//         .catch((error) => next(error));
+// });
+
+app.delete("/api/persons/:id", (request, response, next) => {
+    Person.findByIdAndRemove(request.params.id)
+        .then((result) => {
+            console.log(`Deleted ${result.name}`);
+            response.status(204).end();
+        })
+        .catch((error) => next(error));
+});
+
+// const generateID = () => {
+//     return Math.floor(Math.random() * 100000);
+// };
 
 app.post("/api/persons", (request, response) => {
     const body = request.body;
@@ -142,16 +146,35 @@ app.post("/api/persons", (request, response) => {
 app.put("/api/persons/:id", (request, response) => {
     const body = request.body;
     //using findOneandUpdate because the phonebook gives the option to overwrite.
+    // check if there is a id value passed in request
     Person.findOneAndUpdate(
         { name: body.name },
         { number: body.number },
         { new: true, upsert: true }
-    ).then((person) => {
-        response.json(person);
-    });
+    )
+        .then((person) => {
+            response.json(person);
+        })
+        .catch((error) => next(error));
 });
 
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: "unknown endpoint" });
+};
+
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message);
+
+    if (error.name === "CastError") {
+        return response.status(400).send({ error: "malformatted id" });
+    }
+
+    next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = 3001;
 app.listen(PORT, () => {

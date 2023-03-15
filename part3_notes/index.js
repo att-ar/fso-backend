@@ -19,10 +19,10 @@ const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: "unknown endpoint" });
 };
 
+app.use(express.static(path.join(__dirname, "frontend/build")));
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
-app.use(express.static(path.join(__dirname, "frontend/build")));
 
 let notes = [
     {
@@ -53,9 +53,15 @@ app.get("/api/notes", (request, response) => {
 });
 
 app.get("/api/notes/:id", (request, response) => {
-    Note.findById(request.params.id).then((note) => {
-        response.json(note);
-    });
+    Note.findById(request.params.id)
+        .then((note) => {
+            if (note) {
+                response.json(note);
+            } else {
+                response.status(404).end();
+            }
+        })
+        .catch((error) => next(error));
 });
 
 const generateId = () => {
@@ -80,38 +86,78 @@ app.post("/api/notes", (request, response) => {
     });
 });
 
-app.put("/api/notes/:id", (request, response) => {
-    // the id below is from the object not the url
-    // const id = Number(request.params.id);
-    const id = request.params.id;
-    // no longer a number with MongoDB
+//my implementation:
+// app.put("/api/notes/:id", (request, response) => {
+//     // the id below is from the object not the url
+//     // const id = Number(request.params.id);
+//     const id = request.params.id;
+//     // no longer a number with MongoDB
 
-    Note.replaceOne({ _id: id }, { ...request.body })
-        .then((note) => {
-            response.json(note);
+//     Note.replaceOne({ _id: id }, { ...request.body })
+//         .then((note) => {
+//             response.json(note);
+//         })
+//         .catch((error) => {
+//             console.log("ID does not exist");
+//             console.error(error.message);
+//         });
+// });
+// FSO implementation: I used a similar method (findOneAndUpdate)
+// for the phonebook but i had upsert: true
+// so that it doesnt add only modifies existing things
+app.put("/api/notes/:id", (request, response, next) => {
+    const body = request.body;
+
+    const note = {
+        content: body.content,
+        important: body.important,
+    };
+
+    Note.findByIdAndUpdate(request.params.id, note, { new: true })
+        .then((updatedNote) => {
+            response.json(updatedNote);
         })
-        .catch((error) => {
-            console.log("ID does not exist");
-            console.error(error.message);
-        });
+        .catch((error) => next(error));
 });
 
-app.delete("/api/notes/:id", (request, response) => {
-    // const id = Number(request.params.id);
-    const id = request.params.id;
-    // no longer a number with MongoDB
+// my implementation:
+// app.delete("/api/notes/:id", (request, response) => {
+//     // const id = Number(request.params.id);
+//     const id = request.params.id;
+//     // no longer a number with MongoDB
 
-    Note.deleteOne({ _id: id })
-        .then((deleteCount) => {
-            response.json(deleteCount);
+//     Note.deleteOne({ _id: id })
+//         .then((deleteCount) => {
+//             response.json(deleteCount);
+//         })
+//         .catch((error) => {
+//             console.log("ID does not exist");
+//             console.error(error.message);
+//         });
+// });
+// FSO implementation
+app.delete("/api/notes/:id", (request, response, next) => {
+    console.log(request.params.id);
+    Note.findByIdAndRemove(request.params.id)
+        .then((result) => {
+            response.status(204).end();
         })
-        .catch((error) => {
-            console.log("ID does not exist");
-            console.error(error.message);
-        });
+        .catch((error) => next(error));
 });
 
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message);
+
+    if (error.name === "CastError") {
+        return response.status(400).send({ error: "malformatted id" });
+    }
+
+    next(error);
+};
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
