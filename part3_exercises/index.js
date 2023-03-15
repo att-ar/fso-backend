@@ -1,8 +1,13 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
+
+const Person = require("./models/person");
 const path = require("path");
+const { response } = require("express");
 
 // making a morgan token for logging the data sent in POST requests
 const onlyPostData = (request, response) => {
@@ -37,65 +42,76 @@ app.use(
 );
 app.use(express.static(path.join(__dirname, "build")));
 
-let persons = [
-    {
-        id: 1,
-        name: "Arto Hellas",
-        number: "040-123456",
-    },
-    {
-        id: 2,
-        name: "Ada Lovelace",
-        number: "39-44-5323523",
-    },
-    {
-        id: 3,
-        name: "Dan Abramov",
-        number: "12-43-234345",
-    },
-    {
-        id: 4,
-        name: "Mary Poppendieck",
-        number: "39-23-6423122",
-    },
-];
+// let persons = [
+//     {
+//         id: 1,
+//         name: "Arto Hellas",
+//         number: "040-123456",
+//     },
+//     {
+//         id: 2,
+//         name: "Ada Lovelace",
+//         number: "39-44-5323523",
+//     },
+//     {
+//         id: 3,
+//         name: "Dan Abramov",
+//         number: "12-43-234345",
+//     },
+//     {
+//         id: 4,
+//         name: "Mary Poppendieck",
+//         number: "39-23-6423122",
+//     },
+// ];
 
 app.get("/", function (req, res) {
     res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 app.get("/api/persons", (request, response) => {
-    response.json(persons);
+    //Person.find() returns a list of objects satisfying the query predicate
+    Person.find({}).then((persons) => {
+        response.json(persons);
+    });
 });
 
 app.get("/api/persons/info", (request, response) => {
     const dateObj = new Date();
-    result = `<p>
-        Phonebook has info for ${persons.length} ${
-        persons.length === 1 ? "person" : "people"
-    }
+    Person.find({}).then((persons) => {
+        console.log(typeof persons.length);
+        const numPersons = persons.length;
+        result = `<p>
+        Phonebook has info for ${numPersons} ${
+            numPersons === 1 ? "person" : "people"
+        }
     </p>
     <p>
         ${dateObj}
     </p>`;
-    response.send(result);
+        response.send(result);
+    });
 });
 
 app.get("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id);
-    const person = persons.find((person) => person.id === id);
-
-    if (person) {
+    Person.findById(request.params.id).then((person) => {
         response.json(person);
-    } else {
-        response.status(404).end();
-    }
+    });
 });
 
 app.delete("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id);
-    persons = persons.filter((person) => person.id !== id);
-    response.status(204).end();
+    // const id = Number(request.params.id);
+    const id = request.params.id;
+    // no longer a number with MongoDB
+
+    Person.deleteOne({ _id: id })
+        .then((deleteCount) => {
+            response.json(deleteCount);
+        })
+        .catch((error) => {
+            console.log("ID does not exist");
+            console.error(error.message);
+        });
 });
 
 const generateID = () => {
@@ -106,23 +122,33 @@ app.post("/api/persons", (request, response) => {
     const body = request.body;
 
     if (!body.name || !body.number) {
-        return response.status(400).json({
-            error: "Information is missing",
-        });
-    } else if (persons.find((person) => person.name === body.name)) {
-        return response.status(400).json({
-            error: "name must be unique",
-        });
+        return response
+            .status(400)
+            .json({
+                error: "Information is missing",
+            })
+            .end();
     }
-
-    const person = {
-        id: generateID(),
+    const person = new Person({
         name: body.name,
         number: body.number,
-    };
-    persons = persons.concat(person);
+    });
 
-    response.json(person);
+    person.save().then((savedPerson) => {
+        response.json(savedPerson);
+    });
+});
+
+app.put("/api/persons/:id", (request, response) => {
+    const body = request.body;
+    //using findOneandUpdate because the phonebook gives the option to overwrite.
+    Person.findOneAndUpdate(
+        { name: body.name },
+        { number: body.number },
+        { new: true, upsert: true }
+    ).then((person) => {
+        response.json(person);
+    });
 });
 
 app.use(unknownEndpoint);
