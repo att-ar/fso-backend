@@ -45,7 +45,7 @@ if (process.argv.length === 3) {
             number,
         });
 
-        person.save().then((result) => {
+        person.save().then(() => {
             console.log("person added!");
             mongoose.connection.close();
         });

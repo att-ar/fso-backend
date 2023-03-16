@@ -7,10 +7,9 @@ const cors = require("cors");
 
 const Person = require("./models/person");
 const path = require("path");
-const { response } = require("express");
 
 // making a morgan token for logging the data sent in POST requests
-const onlyPostData = (request, response) => {
+const onlyPostData = (request) => {
     if (request.method === "POST") {
         return JSON.stringify(request.body);
     }
@@ -77,7 +76,7 @@ app.get("/api/persons/info", (request, response) => {
     Person.find({}).then((persons) => {
         console.log(typeof persons.length);
         const numPersons = persons.length;
-        result = `<p>
+        const result = `<p>
         Phonebook has info for ${numPersons} ${
             numPersons === 1 ? "person" : "people"
         }
