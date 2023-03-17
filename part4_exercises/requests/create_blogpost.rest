@@ -1,0 +1,9 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+
+{
+    "title":"Global Warming! Irreversible Damage",
+    "author":"Winter (the idol)",
+    "url":"someurl",
+    "likes":9090
+}
