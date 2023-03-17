@@ -5,25 +5,37 @@ const Note = require("../models/note");
 // because of the following in app.js:
 // const notesRouter = require("./controllers/notes");
 // app.use("/api/notes", notesRouter);
-notesRouter.get("/", (request, response) => {
-    Note.find({}).then((notes) => {
-        response.json(notes);
-    });
+notesRouter.get("/", async (request, response) => {
+    // leaving this for reference (would have to remove async tho)
+    // Note.find({}).then((notes) => {
+    //     response.json(notes);
+    // });
+    const notes = await Note.find({});
+    response.json(notes);
 });
 
-notesRouter.get("/:id", (request, response, next) => {
-    Note.findById(request.params.id)
-        .then((note) => {
-            if (note) {
-                response.json(note);
-            } else {
-                response.status(404).end();
-            }
-        })
-        .catch((error) => next(error));
+notesRouter.get("/:id", async (request, response) => {
+    // // without 'express-async-errors' installed, would need these try/catch blocks
+    // // would also have to add the 'next' function argument
+    // try {
+    //     const note = await Note.findById(request.params.id);
+    //     if (note) {
+    //         response.json(note);
+    //     } else {
+    //         response.status(404).end();
+    //     }
+    // } catch (exception) {
+    //     next(exception);
+    // }
+    const note = await Note.findById(request.params.id);
+    if (note) {
+        response.json(note);
+    } else {
+        response.status(404).end();
+    }
 });
 
-notesRouter.post("/", (request, response, next) => {
+notesRouter.post("/", async (request, response) => {
     const body = request.body;
 
     const note = new Note({
@@ -31,22 +43,23 @@ notesRouter.post("/", (request, response, next) => {
         important: body.important || false,
     });
 
-    note.save()
-        .then((savedNote) => {
-            response.json(savedNote);
-        })
-        .catch((error) => next(error));
+    const savedNote = await note.save();
+    response.status(201).json(savedNote);
+
+    // // leaving here for reference because of the error handling
+    // note.save()
+    //     .then((savedNote) => {
+    //         response.status(201).json(savedNote);
+    //     })
+    //     .catch((error) => next(error));
 });
 
-notesRouter.delete("/:id", (request, response, next) => {
-    Note.findByIdAndRemove(request.params.id)
-        .then(() => {
-            response.status(204).end();
-        })
-        .catch((error) => next(error));
+notesRouter.delete("/:id", async (request, response) => {
+    await Note.findByIdAndRemove(request.params.id);
+    response.status(204).end();
 });
 
-notesRouter.put("/:id", (request, response, next) => {
+notesRouter.put("/:id", async (request, response) => {
     const body = request.body;
     // no destructuring here incase the attribute doesnt exist
 
@@ -55,11 +68,10 @@ notesRouter.put("/:id", (request, response, next) => {
         important: body.important,
     };
 
-    Note.findByIdAndUpdate(request.params.id, note, { new: true })
-        .then((updatedNote) => {
-            response.json(updatedNote);
-        })
-        .catch((error) => next(error));
+    const updatedNote = await Note.findByIdAndUpdate(request.params.id, note, {
+        new: true,
+    });
+    response.status(200).json(updatedNote);
 });
 
 module.exports = notesRouter;
