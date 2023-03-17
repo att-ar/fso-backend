@@ -6,11 +6,11 @@
     "scripts": {
         "start": "node index.js",
         "dev": "nodemon index.js",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "build:ui": "cd frontend && rm -rf build && cd ../../../fso/fso-learning/part2 && npm run build && cp -r build ../../../fso-backend/part3_notes/frontend",
+        "build:ui": "rm -rf build && cd ../../../fso/fso-learning/part2_notes && npm run build && cp -r build ../../../fso-backend/part3_notes/",
         "deploy": "git add . && git commit -m uibuild && git push",
-        "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push",
-        "lint": "eslint ."
+        "deploy:full": "npm run build:ui && npm run deploy",
+        "lint": "eslint .",
+        "test": "jest --verbose"
     },
     "repository": {
         "type": "git",
@@ -25,6 +25,10 @@
         "mongoose": "^7.0.1"
     },
     "devDependencies": {
+        "jest": "^29.5.0",
         "nodemon": "^2.0.21"
+    },
+    "jest": {
+        "testEnvironment": "node"
     }
 }
