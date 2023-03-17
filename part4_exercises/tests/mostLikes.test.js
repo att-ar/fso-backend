@@ -1,13 +1,9 @@
 const listHelper = require("../utils/list_helper");
-const {
-    listWithOneBlog,
-    blogs,
-    listWithZeroBlogs,
-} = require("./list_of_blogs");
+const helper = require("./test_helper");
 
 describe("most likes", () => {
     test("when list has one blog, equals the likes of the blog", () => {
-        const result = listHelper.mostLikes(listWithOneBlog);
+        const result = listHelper.mostLikes(helper.listWithOneBlog);
         expect(result).toStrictEqual({
             author: "Edsger W. Dijkstra",
             likes: 5,
@@ -15,7 +11,7 @@ describe("most likes", () => {
     });
 
     test("when list has many blogs, equals the correct author", () => {
-        const result = listHelper.mostLikes(blogs);
+        const result = listHelper.mostLikes(helper.blogs);
         expect(result).toStrictEqual({
             author: "Edsger W. Dijkstra",
             likes: 17,
@@ -23,7 +19,7 @@ describe("most likes", () => {
     });
 
     test("when list has zero, equals empty object", () => {
-        const result = listHelper.mostLikes(listWithZeroBlogs);
+        const result = listHelper.mostLikes(helper.listWithZeroBlogs);
         expect(result).toStrictEqual({});
     });
 });

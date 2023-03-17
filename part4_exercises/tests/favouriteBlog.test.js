@@ -1,15 +1,11 @@
 const listHelper = require("../utils/list_helper");
 
-const {
-    listWithOneBlog,
-    blogs,
-    listWithZeroBlogs,
-} = require("./list_of_blogs");
+const helper = require("./test_helper");
 
 describe("Favourite blog", () => {
     //can use toEqual as well, but it doesnt check for undefined attributes or array values
     test("when list with one blog, favourite is the blog", () => {
-        const result = listHelper.favouriteBlog(listWithOneBlog);
+        const result = listHelper.favouriteBlog(helper.listWithOneBlog);
         expect(result).toStrictEqual({
             _id: "5a422aa71b54a676234d17f8",
             title: "Go To Statement Considered Harmful",
@@ -21,7 +17,7 @@ describe("Favourite blog", () => {
     });
 
     test("when list with multiple blogs, favourite is the correct one", () => {
-        const result = listHelper.favouriteBlog(blogs);
+        const result = listHelper.favouriteBlog(helper.blogs);
         expect(result).toStrictEqual({
             _id: "5a422b3a1b54a676234d17f9",
             title: "Canonical string reduction",
@@ -33,7 +29,7 @@ describe("Favourite blog", () => {
     });
 
     test("when list has zero blogs, should return empty object", () => {
-        const result = listHelper.favouriteBlog(listWithZeroBlogs);
+        const result = listHelper.favouriteBlog(helper.listWithZeroBlogs);
         expect(result).toStrictEqual({});
     });
 });

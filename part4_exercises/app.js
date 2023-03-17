@@ -2,6 +2,7 @@ const config = require("./utils/config");
 //config needs to be first because of the env variables
 
 const express = require("express");
+require("express-async-errors");
 const app = express();
 
 const cors = require("cors");

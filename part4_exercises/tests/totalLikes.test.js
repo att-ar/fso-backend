@@ -1,9 +1,5 @@
 const listHelper = require("../utils/list_helper");
-const {
-    listWithOneBlog,
-    blogs,
-    listWithZeroBlogs,
-} = require("./list_of_blogs");
+const helper = require("./test_helper");
 // https://jestjs.io/docs/api#testonlyname-fn-timeout
 // methods for only doing certain tests, etc. a lot of stuff
 
@@ -11,17 +7,17 @@ const {
 // npm test -- -t "when list has only one blog, equals the likes of that"
 describe("total likes", () => {
     test("when list has only one blog, equals the likes of that", () => {
-        const result = listHelper.totalLikes(listWithOneBlog);
+        const result = listHelper.totalLikes(helper.listWithOneBlog);
         expect(result).toBe(5);
     });
 
     test("when list has multiple blogs, equals the correct total", () => {
-        const result = listHelper.totalLikes(blogs);
+        const result = listHelper.totalLikes(helper.blogs);
         expect(result).toBe(36);
     });
 
     test("when list has zero blogs, equals zero", () => {
-        const result = listHelper.totalLikes(listWithZeroBlogs);
+        const result = listHelper.totalLikes(helper.listWithZeroBlogs);
         expect(result).toBe(0);
     });
 });
