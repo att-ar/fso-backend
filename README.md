@@ -2,4 +2,4 @@
 
 This part starts the content regarding backend: node and express
 
-Exercise 3.10 link to app on Render: https://part3-exercises.onrender.com
+Link to Phonebook app (Part 3) on Render: https://part3-exercises.onrender.com
