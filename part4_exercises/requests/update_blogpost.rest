@@ -1,0 +1,9 @@
+PUT http://localhost:3003/api/blogs/6413c42bbdc6b34011399c85
+Content-Type:application/json
+
+{
+    "title": "Keshi in Montreal, elite status",
+    "author": "Red Velvet (the kpop group)",
+    "url": "someurl_gotchangedtwice",
+    "likes": 5890
+}
