@@ -7,7 +7,12 @@ const noteSchema = new mongoose.Schema({
         minlength: 5,
     },
     important: Boolean,
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
 });
+// user references the object ID of the User who created it
 
 noteSchema.set("toJSON", {
     transform: (document, returnedObject) => {
