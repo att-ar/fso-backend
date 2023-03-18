@@ -8,10 +8,85 @@ const api = supertest(app);
 const User = require("../models/user");
 const Note = require("../models/note");
 
-describe("when there is initially some notes saved", () => {
+//Adding users to the test db first, needed for auth testing later
+describe("when there is initially one user in db", () => {
     beforeEach(async () => {
+        await User.deleteMany({});
+
+        const passwordHash = await bcrypt.hash("sekret", 10);
+        const user = new User({ username: "root", passwordHash });
+        await user.save();
+
+        const passwordHash2 = await bcrypt.hash("melatonin", 10);
+        const user2 = new User({
+            username: "tears",
+            passwordHash: passwordHash2,
+        });
+        await user2.save();
+    });
+    test("creation succeeds with a fresh username", async () => {
+        const usersAtStart = await helper.usersInDb();
+
+        const newUser = {
+            username: "mluukkai",
+            name: "Matti Luukkainen",
+            password: "salainen",
+        };
+
+        await api
+            .post("/api/users")
+            .send(newUser)
+            .expect(201)
+            .expect("Content-Type", /application\/json/);
+
+        const usersAtEnd = await helper.usersInDb();
+        expect(usersAtEnd).toHaveLength(usersAtStart.length + 1);
+
+        const usernames = usersAtEnd.map((u) => u.username);
+        expect(usernames).toContain(newUser.username);
+    });
+
+    test("creation fails with proper statuscode and message if username already taken", async () => {
+        const usersAtStart = await helper.usersInDb();
+
+        const newUser = {
+            username: "root",
+            name: "Superuser",
+            password: "salainen",
+        };
+
+        const result = await api
+            .post("/api/users")
+            .send(newUser)
+            .expect(400)
+            .expect("Content-Type", /application\/json/);
+
+        expect(result.body.error).toContain("expected `username` to be unique");
+
+        const usersAtEnd = await helper.usersInDb();
+        expect(usersAtEnd).toEqual(usersAtStart);
+    });
+});
+
+//Note testing with user auth
+describe("when there is initially some notes and users saved", () => {
+    beforeEach(async () => {
+        //need to do this so that I can use the note api with a token
+        // the goal is to make "root" post the notes and have the ids propagate correctly
+        // I want the initial notes to all have user IDs so I can test authentification stuff
+        const loginResponse = await api
+            .post("/api/login")
+            .send({ username: "root", password: "sekret" });
+        const authToken = "Bearer " + loginResponse.body.token;
+
         await Note.deleteMany({});
-        await Note.insertMany(helper.initialNotes);
+
+        for (let note of helper.initialNotes) {
+            await api
+                .post("/api/notes")
+                .set("authorization", authToken)
+                .send(note);
+        }
 
         // const noteObjects = helper.initialNotes.map((note) => new Note(note));
         // const promiseArray = noteObjects.map((note) => note.save());
@@ -72,13 +147,24 @@ describe("when there is initially some notes saved", () => {
     });
 
     describe("addition of a new note", () => {
-        test("succeeds with a valid note", async () => {
+        test("succeeds with a valid note and user login", async () => {
+            //need to get a valid user token
+            const response = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+
+            const userToken = "Bearer " + response.body.token;
+
             const newNote = {
                 content: "async/await simplifies making async calls",
                 important: true,
             };
+            //need to add a .set("Authorization", token)
+            // must be after post and before send
             await api
                 .post("/api/notes")
+                .set("authorization", userToken)
                 .send(newNote)
                 .expect(201)
                 .expect("Content-Type", /application\/json/);
@@ -106,11 +192,21 @@ describe("when there is initially some notes saved", () => {
     });
 
     describe("deletion of a note", () => {
-        test("succeeds with status code 204 if id is valid", async () => {
+        test("succeeds with status code 204 if id and user are valid", async () => {
             const notesAtStart = await helper.notesInDb();
             const noteToDelete = notesAtStart[0];
 
-            await api.delete(`/api/notes/${noteToDelete.id}`).expect(204);
+            const response = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+
+            const userToken = "Bearer " + response.body.token;
+
+            await api
+                .delete(`/api/notes/${noteToDelete.id}`)
+                .set("authorization", userToken)
+                .expect(204);
 
             const notesAtEnd = await helper.notesInDb();
 
@@ -119,6 +215,37 @@ describe("when there is initially some notes saved", () => {
             //gets the content property of each note
             const contents = notesAtEnd.map((n) => n.content);
             expect(contents).not.toContain(noteToDelete.content);
+        });
+
+        test("fails with status code 401 if ids are valid but user did not create the note", async () => {
+            const notesAtStart = await helper.notesInDb();
+            const noteToDelete = notesAtStart[0];
+
+            const response = await api.post("/api/login").send({
+                username: "tears",
+                password: "melatonin",
+            });
+
+            const userToken = "Bearer " + response.body.token;
+
+            await api
+                .delete(`/api/notes/${noteToDelete.id}`)
+                .set("authorization", userToken)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
+        });
+
+        test("fails with status code 400 if user does not exist", async () => {
+            const notesAtStart = await helper.notesInDb();
+            const noteToDelete = notesAtStart[0];
+
+            const userToken = "Bearer 09asf";
+
+            await api
+                .delete(`/api/notes/${noteToDelete.id}`)
+                .set("authorization", userToken)
+                .expect(400)
+                .expect("Content-Type", /application\/json/);
         });
     });
 
@@ -142,59 +269,6 @@ describe("when there is initially some notes saved", () => {
 
             expect(notesAtEnd[0]).toEqual(toggledNote);
         });
-    });
-});
-
-describe("when there is initially one user in db", () => {
-    beforeEach(async () => {
-        await User.deleteMany({});
-
-        const passwordHash = await bcrypt.hash("sekret", 10);
-        const user = new User({ username: "root", passwordHash });
-
-        await user.save();
-    });
-    test("creation succeeds with a fresh username", async () => {
-        const usersAtStart = await helper.usersInDb();
-
-        const newUser = {
-            username: "mluukkai",
-            name: "Matti Luukkainen",
-            password: "salainen",
-        };
-
-        await api
-            .post("/api/users")
-            .send(newUser)
-            .expect(201)
-            .expect("Content-Type", /application\/json/);
-
-        const usersAtEnd = await helper.usersInDb();
-        expect(usersAtEnd).toHaveLength(usersAtStart.length + 1);
-
-        const usernames = usersAtEnd.map((u) => u.username);
-        expect(usernames).toContain(newUser.username);
-    });
-
-    test("creation fails with proper statuscode and message if username already taken", async () => {
-        const usersAtStart = await helper.usersInDb();
-
-        const newUser = {
-            username: "root",
-            name: "Superuser",
-            password: "salainen",
-        };
-
-        const result = await api
-            .post("/api/users")
-            .send(newUser)
-            .expect(400)
-            .expect("Content-Type", /application\/json/);
-
-        expect(result.body.error).toContain("expected `username` to be unique");
-
-        const usersAtEnd = await helper.usersInDb();
-        expect(usersAtEnd).toEqual(usersAtStart);
     });
 });
 
