@@ -1,11 +1,14 @@
 const blogsRouter = require("express").Router();
 const Blog = require("../models/blog");
 const User = require("../models/user");
-const jwt = require("jsonwebtoken");
+// const jwt = require("jsonwebtoken");
 
 //check the part3_notes/notes.js for explanation of the urls omitting /api/blogs
 blogsRouter.get("/", async (request, response) => {
-    const blogs = await Blog.find({});
+    const blogs = await Blog.find({}).populate("user", {
+        username: 1,
+        name: 1,
+    });
     response.json(blogs);
 });
 
@@ -19,13 +22,13 @@ blogsRouter.get("/:id", async (request, response) => {
     }
 });
 
-const getTokenFrom = (request) => {
-    const authorization = request.get("authorization");
-    if (authorization && authorization.startsWith("Bearer ")) {
-        return authorization.replace("Bearer ", "");
-    }
-    return null;
-};
+// const getTokenFrom = (request) => {
+//     const authorization = request.get("authorization");
+//     if (authorization && authorization.startsWith("Bearer ")) {
+//         return authorization.replace("Bearer ", "");
+//     }
+//     return null;
+// };
 // const checkUserValidity = (response, decodedTokenId, blog) => {
 //     if (!decodedTokenId) {
 //         //status 401 Unauthorized
@@ -39,9 +42,18 @@ const getTokenFrom = (request) => {
 // };
 
 blogsRouter.post("/", async (request, response) => {
-    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
-    const user = await User.findById(decodedToken.id);
-    const blog = new Blog(request.body);
+    const users = await User.find({});
+    const randomCreator = users[0];
+    // const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
+    const user = await User.findById(randomCreator.id);
+    const { title, author, url, id } = request.body;
+    const blog = new Blog({
+        title,
+        author,
+        url,
+        id,
+        user: user.id,
+    });
 
     const postedBlog = await blog.save();
     user.blogs = user.blogs.concat(postedBlog._id);

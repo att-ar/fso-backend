@@ -2,8 +2,8 @@ POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 {
-    "title":"Stray Kids are breaking records",
-    "author":"Bang Chan",
+    "title":"Keshi in Montreal March 18",
+    "author":"Inkigayo K-pop",
     "url":"someurl",
-    "likes":69096
+    "likes":600
 }
