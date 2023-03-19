@@ -11,6 +11,18 @@ const usersInDb = async () => {
     return users.map((u) => u.toJSON());
 };
 
+const nonExistingId = async () => {
+    const blog = new Blog({
+        title: "melatonin tears i cry",
+        author: "The Weeknd",
+        url: "My dear melancholy",
+    });
+    await blog.save();
+    await blog.deleteOne();
+
+    return blog._id.toString();
+};
+
 const listWithOneBlog = [
     {
         title: "Go To Statement Considered Harmful",
@@ -89,6 +101,7 @@ const singleBlogNoUrl = {
 module.exports = {
     blogsInDb,
     usersInDb,
+    nonExistingId,
     listWithOneBlog,
     blogs,
     listWithZeroBlogs,

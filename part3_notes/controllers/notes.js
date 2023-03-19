@@ -89,7 +89,7 @@ notesRouter.delete("/:id", async (request, response) => {
     checkUserValidity(response, decodedToken.id, noteToDelete);
 
     const user = await User.findById(decodedToken.id);
-    await Note.findByIdAndRemove(request.params.id);
+    await noteToDelete.deleteOne();
     user.notes = user.notes.filter((note) => note.id !== request.params.id);
     user.save();
     response.status(204).end();
@@ -109,9 +109,7 @@ notesRouter.put("/:id", async (request, response) => {
         user: body.user,
     };
 
-    const updatedNote = await Note.findByIdAndUpdate(request.params.id, note, {
-        new: true,
-    });
+    const updatedNote = await noteToUpdate.replaceOne(note);
     response.status(200).json(updatedNote);
 });
 

@@ -14,12 +14,17 @@ describe("when there is initially two users in db", () => {
         await User.deleteMany({});
 
         const passwordHash = await bcrypt.hash("sekret", 10);
-        const user = new User({ username: "root", passwordHash });
+        const user = new User({
+            username: "root",
+            name: "Jamie",
+            passwordHash,
+        });
         await user.save();
 
         const passwordHash2 = await bcrypt.hash("melatonin", 10);
         const user2 = new User({
             username: "tears",
+            name: "Lily",
             passwordHash: passwordHash2,
         });
         await user2.save();
@@ -133,13 +138,15 @@ describe("when there is initially some notes and users saved", () => {
             expect(resultNote.body).toEqual(noteToView);
         });
 
-        test("fails with statuscode 404 if note does not exist", async () => {
+        test("fails with statuscode 404 if note was deleted already", async () => {
             const validNonexistingId = await helper.nonExistingId();
 
             await api.get(`/api/notes/${validNonexistingId}`).expect(404);
         });
 
         test("fails with statuscode 400 if id is invalid", async () => {
+            // this is for when a note has never been added to the db in the first place
+            // the url address was never created
             const invalidId = "5a3d5da59070081a82a3445";
 
             await api.get(`/api/notes/${invalidId}`).expect(400);
@@ -153,7 +160,6 @@ describe("when there is initially some notes and users saved", () => {
                 username: "root",
                 password: "sekret",
             });
-
             const userToken = "Bearer " + response.body.token;
 
             const newNote = {
@@ -179,18 +185,29 @@ describe("when there is initially some notes and users saved", () => {
         });
 
         test("fails with status code 400 if data invalid", async () => {
+            //need to get a valid user token
+            const response = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+            const userToken = "Bearer " + response.body.token;
+
             const newNote = {
                 important: true,
             };
 
-            await api.post("/api/notes").send(newNote).expect(400);
+            await api
+                .post("/api/notes")
+                .set("Authorization", userToken)
+                .send(newNote)
+                .expect(400);
 
             const notesAtEnd = await helper.notesInDb();
 
             expect(notesAtEnd).toHaveLength(helper.initialNotes.length);
         });
 
-        test("fails with status code 400 if token is not real", async () => {
+        test("fails with status code 401 if token is not real", async () => {
             const newNote = {
                 content: "async/await simplifies making async calls",
                 important: true,
@@ -200,7 +217,19 @@ describe("when there is initially some notes and users saved", () => {
                 .post("/api/notes")
                 .set("authorization", userToken)
                 .send(newNote)
-                .expect(400)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
+        });
+
+        test("fails with status code 401 is token is missing", async () => {
+            const newNote = {
+                content: "async/await simplifies making async calls",
+                important: true,
+            };
+            await api
+                .post("/api/notes")
+                .send(newNote)
+                .expect(401)
                 .expect("Content-Type", /application\/json/);
         });
     });
@@ -249,7 +278,7 @@ describe("when there is initially some notes and users saved", () => {
                 .expect("Content-Type", /application\/json/);
         });
 
-        test("fails with status code 400 if user does not exist", async () => {
+        test("fails with status code 401 if user does not exist", async () => {
             const notesAtStart = await helper.notesInDb();
             const noteToDelete = notesAtStart[0];
 
@@ -258,13 +287,12 @@ describe("when there is initially some notes and users saved", () => {
             await api
                 .delete(`/api/notes/${noteToDelete.id}`)
                 .set("authorization", userToken)
-                .expect(400)
+                .expect(401)
                 .expect("Content-Type", /application\/json/);
         });
     });
 
     describe("updating a note", () => {
-        //work on this next
         test("a note's importance can be toggled by the user who created it", async () => {
             const notesAtStart = await helper.notesInDb();
             const noteToToggle = notesAtStart[0];
@@ -290,6 +318,22 @@ describe("when there is initially some notes and users saved", () => {
             expect(notesAtEnd).toHaveLength(helper.initialNotes.length);
 
             expect(notesAtEnd[0]).toEqual(toggledNote);
+        });
+        test("fails with statuscode 401 when an existing but incorrect user tries to delete a note", async () => {
+            const notesAtStart = await helper.notesInDb();
+            const noteToUpdate = notesAtStart[0];
+            // real but incorrect user
+            const response = await api.post("/api/login").send({
+                username: "tears",
+                password: "melatonin",
+            });
+
+            const userToken = "Bearer " + response.body.token;
+            await api
+                .put(`/api/notes/${noteToUpdate.id}`)
+                .set("Authorization", userToken)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
         });
     });
 });

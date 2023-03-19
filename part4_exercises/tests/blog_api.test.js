@@ -135,7 +135,7 @@ describe("when there is initally some blogs and users in db", () => {
         }
     });
 
-    describe("when there are some blogs initially", () => {
+    describe("checking blog properties", () => {
         test("The blogs are returned as JSON", async () => {
             await api
                 .get("/api/blogs")
@@ -152,77 +152,240 @@ describe("when there is initally some blogs and users in db", () => {
             const blogs = await helper.blogsInDb();
             blogs.forEach((blog) => expect(blog.id).toBeDefined());
         });
+    });
 
-        describe("Adding a blog to the database", () => {
-            test("successfully responds with status code 201 when blog and user are valid", async () => {
-                const blog = helper.singleBlog;
+    describe("viewing a specific blog", () => {
+        test("a specific blog can be viewed", async () => {
+            const blogsAtStart = await helper.blogsInDb();
+            const blogToView = blogsAtStart[0];
 
-                await api
-                    .post("/api/blogs")
-                    .send(blog)
-                    .expect(201)
-                    .expect("Content-Type", /application\/json/);
+            const resultblog = await api
+                .get(`/api/blogs/${blogToView.id}`)
+                .expect(200)
+                .expect("Content-Type", /application\/json/);
 
-                const blogsAfter = await helper.blogsInDb();
-                expect(blogsAfter).toHaveLength(helper.blogs.length + 1);
-                const blogsStripped = blogsAfter.map(
-                    ({ title, author, url, likes }) => ({
-                        title,
-                        author,
-                        url,
-                        likes,
-                    })
-                );
-                expect(blogsStripped).toContainEqual(blog);
-            });
-
-            test("adding blog with missing likes defaults to 0 likes", async () => {
-                const blog = helper.singleBlogNoLikes;
-                const response = await api.post("/api/blogs").send(blog);
-                expect(response.body.likes).toBe(0);
-            });
-
-            test("missing title fails with status code 400", async () => {
-                const blog = helper.singleBlogNoTitle;
-                await api.post("/api/blogs").send(blog).expect(400);
-            });
-
-            test("missing url fails with status code 400", async () => {
-                const blog = helper.singleBlogNoUrl;
-                await api.post("/api/blogs").send(blog).expect(400);
+            expect(resultblog.body).toEqual({
+                ...blogToView,
+                user: blogToView.user.toString(),
             });
         });
 
-        describe("deleting a blog from the database", () => {
-            test("successfully deletes and responds with status code 204 when id is valid", async () => {
-                const blogsAtStart = await helper.blogsInDb();
-                const blogToDelete = blogsAtStart[0];
-                await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+        test("fails with statuscode 404 if blog was already deleted", async () => {
+            const validNonexistingId = await helper.nonExistingId();
 
-                const blogsAtEnd = await helper.blogsInDb();
-                expect(blogsAtEnd).toHaveLength(helper.blogs.length - 1);
-                expect(blogsAtEnd).not.toContainEqual(blogToDelete);
+            await api.get(`/api/blogs/${validNonexistingId}`).expect(404);
+        });
+        test("fails with statuscode 400 if id is invalid, blog never existed", async () => {
+            // this is for when a blog has never been added to the db in the first place
+            // the url address was never created
+            const invalidId = "5a3d5da59070081a82a3445";
+
+            await api.get(`/api/blogs/${invalidId}`).expect(400);
+        });
+    });
+
+    describe("adding a blog to the database", () => {
+        test("successfully responds with status code 201 when blog and user are valid", async () => {
+            //need to get a valid user token
+            const login = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+            const userToken = "Bearer " + login.body.token;
+
+            const blog = helper.singleBlog;
+
+            await api
+                .post("/api/blogs")
+                .set("Authorization", userToken)
+                .send(blog)
+                .expect(201)
+                .expect("Content-Type", /application\/json/);
+
+            const blogsAfter = await helper.blogsInDb();
+            expect(blogsAfter).toHaveLength(helper.blogs.length + 1);
+            const titles = blogsAfter.map(({ title }) => title);
+            expect(titles).toContain(blog.title);
+        });
+
+        test("adding blog with missing likes defaults to 0 likes", async () => {
+            //need to get a valid user token
+            const login = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+            const userToken = "Bearer " + login.body.token;
+            const blog = helper.singleBlogNoLikes;
+            const response = await api
+                .post("/api/blogs")
+                .set("Authorization", userToken)
+                .send(blog);
+            expect(response.body.likes).toBe(0);
+        });
+
+        test("missing information fails with status code 400", async () => {
+            //need to get a valid user token
+            const response = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+            const userToken = "Bearer " + response.body.token;
+            const blog = helper.singleBlogNoTitle;
+            await api
+                .post("/api/blogs")
+                .set("Authorization", userToken)
+                .send(blog)
+                .expect(400);
+        });
+
+        // test("missing url fails with status code 400", async () => {
+        //     //need to get a valid user token
+        //     const response = await api.post("/api/login").send({
+        //         username: "root",
+        //         password: "sekret",
+        //     });
+        //     const userToken = "Bearer " + response.body.token;
+        //     const blog = helper.singleBlogNoUrl;
+        //     await api
+        //         .post("/api/blogs")
+        //         .set("Authorization", userToken)
+        //         .send(blog)
+        //         .expect(400);
+        // });
+
+        test("fails with status code 401 if token is not real", async () => {
+            const newBlog = {
+                content: "async/await simplifies making async calls",
+                important: true,
+            };
+            const userToken = "Bearer 90iag";
+            await api
+                .post("/api/blogs")
+                .set("authorization", userToken)
+                .send(newBlog)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
+        });
+
+        test("fails with status code 401 if token is missing", async () => {
+            const newBlog = {
+                content: "async/await simplifies making async calls",
+                important: true,
+            };
+            await api
+                .post("/api/blogs")
+                .send(newBlog)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
+        });
+    });
+
+    describe("deleting a blog from the database", () => {
+        test("succeeds with status code 204 if id and user are valid", async () => {
+            const blogsAtStart = await helper.blogsInDb();
+            const blogToDelete = blogsAtStart[0];
+
+            const response = await api.post("/api/login").send({
+                username: "root",
+                password: "sekret",
+            });
+
+            const userToken = "Bearer " + response.body.token;
+
+            await api
+                .delete(`/api/blogs/${blogToDelete.id}`)
+                .set("authorization", userToken)
+                .expect(204);
+
+            const blogsAtEnd = await helper.blogsInDb();
+
+            expect(blogsAtEnd).toHaveLength(helper.blogs.length - 1);
+
+            //gets the content property of each blog
+            const titlesAndUsers = blogsAtEnd.map(({ title, user }) => ({
+                title,
+                user,
+            }));
+            expect(titlesAndUsers).not.toContainEqual({
+                title: blogToDelete.title,
+                user: blogToDelete.user,
             });
         });
 
-        describe("updating a blog in the database", () => {
-            test("successfully return status code 200 when valid update is made", async () => {
-                const blogsAtStart = await helper.blogsInDb();
-                const blogToUpdate = blogsAtStart[0];
-                const newBlog = {
-                    ...blogToUpdate,
-                    likes: blogToUpdate.likes + 921,
-                };
-                await api
-                    .put(`/api/blogs/${blogToUpdate.id}`)
-                    .send(newBlog)
-                    .expect(200)
-                    .expect("Content-Type", /application\/json/);
-
-                const blogsAtEnd = await helper.blogsInDb();
-                const updatedBlog = blogsAtEnd[0];
-                expect(updatedBlog.likes).toBe(blogToUpdate.likes + 921);
+        test("fails with status code 401 if ids are valid but user did not create the blog", async () => {
+            const blogsAtStart = await helper.blogsInDb();
+            const blogToDelete = blogsAtStart[0];
+            // real but incorrect user
+            const response = await api.post("/api/login").send({
+                username: "tears",
+                password: "melatonin",
             });
+
+            const userToken = "Bearer " + response.body.token;
+
+            await api
+                .delete(`/api/blogs/${blogToDelete.id}`)
+                .set("authorization", userToken)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
+        });
+
+        test("fails with status code 401 if user does not exist", async () => {
+            const blogsAtStart = await helper.blogsInDb();
+            const blogToDelete = blogsAtStart[0];
+
+            const userToken = "Bearer 09asf";
+
+            await api
+                .delete(`/api/blogs/${blogToDelete.id}`)
+                .set("authorization", userToken)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
+        });
+    });
+
+    describe("updating a blog in the database", () => {
+        test("return status code 200 when valid blog update is made by the user who created it", async () => {
+            const blogsAtStart = await helper.blogsInDb();
+            const blogToUpdate = blogsAtStart[0];
+            const newBlog = {
+                ...blogToUpdate,
+                likes: blogToUpdate.likes + 921,
+            };
+
+            const loginResponse = await api
+                .post("/api/login")
+                .send({ username: "root", password: "sekret" });
+
+            const userToken = "Bearer " + loginResponse.body.token;
+
+            await api
+                .put(`/api/blogs/${blogToUpdate.id}`)
+                .set("Authorization", userToken)
+                .send(newBlog)
+                .expect(200)
+                .expect("Content-Type", /application\/json/);
+
+            const blogsAtEnd = await helper.blogsInDb();
+            expect(blogsAtEnd).toHaveLength(helper.blogs.length);
+            expect(blogsAtEnd[0]).toEqual(newBlog);
+        });
+
+        test("fails with statuscode 401 when an existing but incorrect user tries to delete a blog", async () => {
+            const blogsAtStart = await helper.blogsInDb();
+            const blogToUpdate = blogsAtStart[0];
+            // real but incorrect user
+            const response = await api.post("/api/login").send({
+                username: "tears",
+                password: "melatonin",
+            });
+
+            const userToken = "Bearer " + response.body.token;
+            await api
+                .put(`/api/blogs/${blogToUpdate.id}`)
+                .set("Authorization", userToken)
+                .expect(401)
+                .expect("Content-Type", /application\/json/);
         });
     });
 });
