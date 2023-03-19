@@ -6,26 +6,36 @@
     "scripts": {
         "start": "cross-env NODE_ENV=production node index.js",
         "dev": "cross-env NODE_ENV=development nodemon index.js",
+        "build:ui": "rm -rf build && cd ../../../fso/fso-learning/part2_notes && npm run build && cp -r build ../../../fso-backend/part3_notes/",
+        "deploy": "git add . && git commit -m uibuild && git push",
+        "deploy:full": "npm run build:ui && npm run deploy",
         "lint": "eslint .",
         "test": "cross-env NODE_ENV=test jest --verbose --runInBand"
     },
+    "repository": {
+        "type": "git",
+        "url": "fso-backend"
+    },
     "author": "A.A.",
     "license": "MIT",
-    "devDependencies": {
-        "jest": "^29.5.0",
-        "nodemon": "^2.0.21",
-        "supertest": "^6.3.3"
-    },
     "dependencies": {
+        "bcrypt": "^5.1.0",
         "cors": "^2.8.5",
         "cross-env": "^7.0.3",
         "dotenv": "^16.0.3",
         "express": "^4.18.2",
         "express-async-errors": "^3.1.1",
-        "lodash": "^4.17.21",
-        "mongoose": "^7.0.2"
+        "jsonwebtoken": "^9.0.0",
+        "mongoose": "^6.10.3",
+        "mongoose-unique-validator": "^3.1.0"
+    },
+    "devDependencies": {
+        "jest": "^29.5.0",
+        "nodemon": "^2.0.21",
+        "supertest": "^6.3.3"
     },
     "jest": {
-        "testEnvironment": "node"
+        "testEnvironment": "node",
+        "globalTeardown": "./tests/teardown.js"
     }
 }

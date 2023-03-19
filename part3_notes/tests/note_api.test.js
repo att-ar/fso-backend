@@ -9,7 +9,7 @@ const User = require("../models/user");
 const Note = require("../models/note");
 
 //Adding users to the test db first, needed for auth testing later
-describe("when there is initially one user in db", () => {
+describe("when there is initially two users in db", () => {
     beforeEach(async () => {
         await User.deleteMany({});
 
