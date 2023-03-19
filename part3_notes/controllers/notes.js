@@ -44,14 +44,21 @@ const getTokenFrom = (request) => {
     }
     return null;
 };
+const checkUserValidity = (response, decodedTokenId, note) => {
+    if (!decodedTokenId) {
+        //status 401 Unauthorized
+        //this condition will never be satisfied because jwt.verify throws an error first
+        return response.status(401).json({ error: "token invalid" });
+    } else if (decodedTokenId !== note.user.toString()) {
+        //status 401 Unauthorized
+        return response.status(401).json({ error: "user permissions invalid" });
+    }
+};
 
 notesRouter.post("/", async (request, response) => {
     const body = request.body;
     const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
-    if (!decodedToken.id) {
-        //status 401 Unauthorized
-        return response.status(401).json({ error: "token invalid" });
-    }
+
     const user = await User.findById(decodedToken.id);
 
     const note = new Note({
@@ -66,6 +73,7 @@ notesRouter.post("/", async (request, response) => {
     response.status(201).json(savedNote);
 
     // // leaving here for reference because of the error handling
+    // // without the express-async-errors package
     // note.save()
     //     .then((savedNote) => {
     //         response.status(201).json(savedNote);
@@ -74,18 +82,11 @@ notesRouter.post("/", async (request, response) => {
 });
 
 notesRouter.delete("/:id", async (request, response) => {
-    const noteToDelete = await Note.findById(request.params.id);
-    const noteUserId = noteToDelete.user.toString();
-
     const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
 
-    if (!decodedToken.id) {
-        //status 401 Unauthorized
-        return response.status(401).json({ error: "token invalid" });
-    } else if (decodedToken.id !== noteUserId) {
-        //status 401 Unauthorized
-        return response.status(401).json({ error: "user permissions invalid" });
-    }
+    const noteToDelete = await Note.findById(request.params.id);
+
+    checkUserValidity(response, decodedToken.id, noteToDelete);
 
     const user = await User.findById(decodedToken.id);
     await Note.findByIdAndRemove(request.params.id);
@@ -95,12 +96,17 @@ notesRouter.delete("/:id", async (request, response) => {
 });
 
 notesRouter.put("/:id", async (request, response) => {
+    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
+    const noteToUpdate = await Note.findById(request.params.id);
+
+    checkUserValidity(response, decodedToken.id, noteToUpdate);
     const body = request.body;
     // no destructuring here incase the attribute doesnt exist
 
     const note = {
         content: body.content,
         important: body.important,
+        user: body.user,
     };
 
     const updatedNote = await Note.findByIdAndUpdate(request.params.id, note, {

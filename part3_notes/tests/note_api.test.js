@@ -189,6 +189,20 @@ describe("when there is initially some notes and users saved", () => {
 
             expect(notesAtEnd).toHaveLength(helper.initialNotes.length);
         });
+
+        test("fails with status code 400 if token is not real", async () => {
+            const newNote = {
+                content: "async/await simplifies making async calls",
+                important: true,
+            };
+            const userToken = "Bearer 90iag";
+            await api
+                .post("/api/notes")
+                .set("authorization", userToken)
+                .send(newNote)
+                .expect(400)
+                .expect("Content-Type", /application\/json/);
+        });
     });
 
     describe("deletion of a note", () => {
@@ -249,8 +263,9 @@ describe("when there is initially some notes and users saved", () => {
         });
     });
 
-    describe("updating a note succeeds if the note exists and update is valid", () => {
-        test("a note's importance can be toggled", async () => {
+    describe("updating a note", () => {
+        //work on this next
+        test("a note's importance can be toggled by the user who created it", async () => {
             const notesAtStart = await helper.notesInDb();
             const noteToToggle = notesAtStart[0];
             const toggledNote = {
@@ -258,8 +273,15 @@ describe("when there is initially some notes and users saved", () => {
                 important: !noteToToggle.important,
             };
 
+            const loginResponse = await api
+                .post("/api/login")
+                .send({ username: "root", password: "sekret" });
+
+            const userToken = "Bearer " + loginResponse.body.token;
+
             await api
                 .put(`/api/notes/${noteToToggle.id}`)
+                .set("Authorization", userToken)
                 .send(toggledNote)
                 .expect(200)
                 .expect("Content-Type", /application\/json/);
