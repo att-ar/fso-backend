@@ -36,12 +36,11 @@ const checkUserValidity = (response, userId, blog) => {
 blogsRouter.post("/", userExtractor, async (request, response) => {
     const user = request.user;
 
-    const { title, author, url, id } = request.body;
+    const { title, author, url } = request.body;
     const blog = new Blog({
         title,
         author,
         url,
-        id,
         user: user.id,
     });
 
