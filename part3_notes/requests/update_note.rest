@@ -1,7 +1,0 @@
-PUT http://localhost:3001/api/notes/64121d9e90d66cda47315087
-Content-Type: application/json
-
-  {
-    "content": "StayC girls, it's going down",
-    "important": false
-  }
