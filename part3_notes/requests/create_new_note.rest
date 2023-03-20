@@ -1,0 +1,10 @@
+POST http://localhost:3001/api/notes
+Content-Type: application/json
+Authorization: Bearer 
+//don't add quotation marks
+
+{
+  "content": "Testing the Auth Header with Carl Saga's token",
+  "important": true,
+  "userId":"6415d5c9d88b07efae75da3d"
+}
