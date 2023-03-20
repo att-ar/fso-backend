@@ -2,6 +2,7 @@ const notesRouter = require("express").Router();
 const Note = require("../models/note");
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
+const { userExtractor } = require("../utils/middleware");
 
 // the urls are relative because this router is only used for calls passed to /api/notes
 // because of the following in app.js:
@@ -55,11 +56,9 @@ const checkUserValidity = (response, decodedTokenId, note) => {
     }
 };
 
-notesRouter.post("/", async (request, response) => {
+notesRouter.post("/", userExtractor, async (request, response) => {
+    const user = request.user;
     const body = request.body;
-    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
-
-    const user = await User.findById(decodedToken.id);
 
     const note = new Note({
         content: body.content,
@@ -81,32 +80,32 @@ notesRouter.post("/", async (request, response) => {
     //     .catch((error) => next(error));
 });
 
-notesRouter.delete("/:id", async (request, response) => {
-    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
-
+notesRouter.delete("/:id", userExtractor, async (request, response) => {
+    const requestUser = request.user;
     const noteToDelete = await Note.findById(request.params.id);
 
-    checkUserValidity(response, decodedToken.id, noteToDelete);
+    checkUserValidity(response, requestUser.id, noteToDelete);
 
-    const user = await User.findById(decodedToken.id);
     await noteToDelete.deleteOne();
-    user.notes = user.notes.filter((note) => note.id !== request.params.id);
-    user.save();
+    requestUser.notes = requestUser.notes.filter(
+        (note) => note.id !== request.params.id
+    );
+    requestUser.save();
     response.status(204).end();
 });
 
-notesRouter.put("/:id", async (request, response) => {
-    const decodedToken = jwt.verify(getTokenFrom(request), process.env.SECRET);
+notesRouter.put("/:id", userExtractor, async (request, response) => {
+    const requestUser = request.user;
     const noteToUpdate = await Note.findById(request.params.id);
 
-    checkUserValidity(response, decodedToken.id, noteToUpdate);
-    const body = request.body;
-    // no destructuring here incase the attribute doesnt exist
+    checkUserValidity(response, requestUser.id, noteToUpdate);
+
+    const { content, important, user } = request.body;
 
     const note = {
-        content: body.content,
-        important: body.important,
-        user: body.user,
+        content,
+        important,
+        user,
     };
 
     const updatedNote = await noteToUpdate.replaceOne(note);

@@ -65,10 +65,10 @@ blogsRouter.delete("/:id", userExtractor, async (request, response) => {
 });
 
 blogsRouter.put("/:id", userExtractor, async (request, response) => {
-    const decodedToken = jwt.verify(request.token, process.env.SECRET);
+    const requestUser = request.user;
     const blogToUpdate = await Blog.findById(request.params.id);
 
-    checkUserValidity(response, decodedToken.id, blogToUpdate);
+    checkUserValidity(response, requestUser.id, blogToUpdate);
 
     const { title, author, url, likes, user } = request.body;
     const newBlog = {
