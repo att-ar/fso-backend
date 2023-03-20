@@ -1,7 +1,5 @@
 const notesRouter = require("express").Router();
 const Note = require("../models/note");
-const User = require("../models/user");
-const jwt = require("jsonwebtoken");
 const { userExtractor } = require("../utils/middleware");
 
 // the urls are relative because this router is only used for calls passed to /api/notes
@@ -38,13 +36,6 @@ notesRouter.get("/:id", async (request, response) => {
     }
 });
 
-const getTokenFrom = (request) => {
-    const authorization = request.get("authorization");
-    if (authorization && authorization.startsWith("Bearer ")) {
-        return authorization.replace("Bearer ", "");
-    }
-    return null;
-};
 const checkUserValidity = (response, decodedTokenId, note) => {
     if (!decodedTokenId) {
         //status 401 Unauthorized

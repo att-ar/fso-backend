@@ -1,6 +1,5 @@
 const blogsRouter = require("express").Router();
 const Blog = require("../models/blog");
-const jwt = require("jsonwebtoken");
 const { userExtractor } = require("../utils/middleware");
 
 //check the part3_notes/notes.js for explanation of the urls omitting /api/blogs
