@@ -108,7 +108,7 @@ describe("when there is initially two users in db", () => {
             .expect(400)
             .expect("Content-Type", /application\/json/);
 
-        expect(result.body.error).toContain("Password is too short");
+        expect(result.body.error).toContain("Password must be");
 
         const usersAtEnd = await helper.usersInDb();
         expect(usersAtEnd).toEqual(usersAtStart);
@@ -159,12 +159,12 @@ describe("when there is initally some blogs and users in db", () => {
             const blogsAtStart = await helper.blogsInDb();
             const blogToView = blogsAtStart[0];
 
-            const resultblog = await api
+            const result = await api
                 .get(`/api/blogs/${blogToView.id}`)
                 .expect(200)
                 .expect("Content-Type", /application\/json/);
-
-            expect(resultblog.body).toEqual({
+            const resultBlog = result.body;
+            expect({ ...resultBlog, user: resultBlog.user.id }).toEqual({
                 ...blogToView,
                 user: blogToView.user.toString(),
             });
@@ -345,23 +345,16 @@ describe("when there is initally some blogs and users in db", () => {
     });
 
     describe("updating a blog in the database", () => {
-        test("return status code 200 when valid blog update is made by the user who created it", async () => {
+        test("return status code 200 when valid blog is liked", async () => {
             const blogsAtStart = await helper.blogsInDb();
             const blogToUpdate = blogsAtStart[0];
             const newBlog = {
                 ...blogToUpdate,
-                likes: blogToUpdate.likes + 921,
+                likes: blogToUpdate.likes + 1,
             };
-
-            const loginResponse = await api
-                .post("/api/login")
-                .send({ username: "root", password: "sekret" });
-
-            const userToken = "Bearer " + loginResponse.body.token;
 
             await api
                 .put(`/api/blogs/${blogToUpdate.id}`)
-                .set("Authorization", userToken)
                 .send(newBlog)
                 .expect(200)
                 .expect("Content-Type", /application\/json/);
@@ -369,23 +362,6 @@ describe("when there is initally some blogs and users in db", () => {
             const blogsAtEnd = await helper.blogsInDb();
             expect(blogsAtEnd).toHaveLength(helper.blogs.length);
             expect(blogsAtEnd[0]).toEqual(newBlog);
-        });
-
-        test("fails with statuscode 401 when an existing but incorrect user tries to delete a blog", async () => {
-            const blogsAtStart = await helper.blogsInDb();
-            const blogToUpdate = blogsAtStart[0];
-            // real but incorrect user
-            const response = await api.post("/api/login").send({
-                username: "tears",
-                password: "melatonin",
-            });
-
-            const userToken = "Bearer " + response.body.token;
-            await api
-                .put(`/api/blogs/${blogToUpdate.id}`)
-                .set("Authorization", userToken)
-                .expect(401)
-                .expect("Content-Type", /application\/json/);
         });
     });
 });

@@ -12,7 +12,11 @@ blogsRouter.get("/", async (request, response) => {
 });
 
 blogsRouter.get("/:id", async (request, response) => {
-    const blog = await Blog.findById(request.params.id);
+    const blog = await Blog.findById(request.params.id).populate("user", {
+        username: 1,
+        name: 1,
+        id: 1,
+    });
     if (blog) {
         response.json(blog);
     } else {
@@ -62,11 +66,13 @@ blogsRouter.delete("/:id", userExtractor, async (request, response) => {
     response.status(204).end();
 });
 
-blogsRouter.put("/:id", userExtractor, async (request, response) => {
-    const requestUser = request.user;
+blogsRouter.put("/:id", async (request, response) => {
+    // const requestUser = request.user;
+    // I removed userExtractor middleware from this request
     const blogToUpdate = await Blog.findById(request.params.id);
 
-    checkUserValidity(response, requestUser.id, blogToUpdate);
+    // checkUserValidity(response, requestUser.id, blogToUpdate);
+    // can only like a blog if you're already logged in
 
     const { title, author, url, likes, user } = request.body;
     const newBlog = {
