@@ -38,6 +38,11 @@ app.use(middleware.tokenExtractor);
 app.use("/api/notes", notesRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/login", loginRouter);
+// only uses the testing router if in testing environment
+if (process.env.NODE_ENV === "test") {
+    const testingRouter = require("./controllers/test");
+    app.use("/api/testing", testingRouter);
+}
 
 app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);
