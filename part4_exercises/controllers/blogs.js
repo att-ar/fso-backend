@@ -7,6 +7,7 @@ blogsRouter.get("/", async (request, response) => {
     const blogs = await Blog.find({}).populate("user", {
         username: 1,
         name: 1,
+        id: 1,
     });
     response.json(blogs);
 });
@@ -26,10 +27,11 @@ blogsRouter.get("/:id", async (request, response) => {
 });
 
 const checkUserValidity = (response, userId, blog) => {
-    if (!userId) {
+    if (userId.error) {
         //status 401 Unauthorized
         // this condition will never be satisfied because jwt.verify throws an error first
         // but the notes have it here so i will leave it
+        // I changed the condition from !userId to userId.error, maybe this can pass now
         return response.status(401).json({ error: "token invalid" });
     } else if (userId !== blog.user.toString()) {
         //status 401 Unauthorized
@@ -61,6 +63,7 @@ blogsRouter.delete("/:id", userExtractor, async (request, response) => {
     checkUserValidity(response, user.id, blogToDelete);
 
     await blogToDelete.deleteOne();
+    // console.log(request.params.id);
     user.blogs = user.blogs.filter((blog) => blog.id !== request.params.id);
     user.save();
     response.status(204).end();
@@ -73,17 +76,23 @@ blogsRouter.put("/:id", async (request, response) => {
 
     // checkUserValidity(response, requestUser.id, blogToUpdate);
     // can only like a blog if you're already logged in
+    // if someone is going out of there to send requests to the backend
+    // that's honestly cool with me
 
-    const { title, author, url, likes, user } = request.body;
-    const newBlog = {
-        title,
-        author,
-        url,
-        likes,
-        user,
-    };
-    const updatedBlog = await blogToUpdate.replaceOne(newBlog);
+    const updatedBlog = await blogToUpdate.replaceOne(request.body);
     response.status(200).json(updatedBlog);
+});
+
+//comments on a blog post:
+// don't need get functionality since they're stored in the blog
+
+blogsRouter.post("/:id/comments", async (request, response) => {
+    const comment = request.body.data;
+    const blog = await Blog.findById(request.params.id);
+    blog.comments = blog.comments.concat(comment);
+
+    const postedBlog = await blog.save();
+    response.status(204).json(postedBlog);
 });
 
 module.exports = blogsRouter;
