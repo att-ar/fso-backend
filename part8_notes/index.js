@@ -31,7 +31,8 @@ type Address {  street: String!  city: String! }
 type Person {
   name: String!
   phone: String
-  address: Address!  id: ID!
+  address: Address!
+  id: ID!
 }
 
 type Query {
