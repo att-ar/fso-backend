@@ -1,0 +1,18 @@
+{
+  "name": "fso-graphql",
+  "version": "0.0.1",
+  "description": "part 8 of fso",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "graphql"
+  ],
+  "author": "A",
+  "license": "MIT",
+  "dependencies": {
+    "@apollo/server": "^4.6.0",
+    "graphql": "^16.6.0"
+  }
+}
