@@ -174,7 +174,6 @@ const resolvers = {
             const idx = authors.findIndex((a) => a.name === args.name);
             if (idx !== -1) {
                 const author = authors[idx];
-                console.log(typeof args.setBornTo);
                 if (typeof args.setBornTo === "number") {
                     author.born = args.setBornTo;
                 }
