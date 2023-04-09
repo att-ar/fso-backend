@@ -1,15 +1,17 @@
 {
-  "name": "part8_exercises",
-  "version": "0.0.1",
-  "description": "part 8 exercises fso",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "A",
-  "license": "MIT",
-  "dependencies": {
-    "@apollo/server": "^4.6.0",
-    "graphql": "^16.6.0"
-  }
+    "name": "part8_exercises",
+    "version": "0.0.1",
+    "description": "part 8 exercises fso",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "nodemon index.js"
+    },
+    "author": "A",
+    "license": "MIT",
+    "dependencies": {
+        "@apollo/server": "^4.6.0",
+        "graphql": "^16.6.0",
+        "nodemon": "^2.0.22"
+    }
 }
