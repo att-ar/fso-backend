@@ -2,18 +2,15 @@ const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
 const { GraphQLError } = require("graphql");
 
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
+require("dotenv").config();
 
 const Person = require("./models/person");
 const User = require("./models/user");
 
-require("dotenv").config();
-
-const jwt = require("jsonwebtoken");
-
 const MONGODB_URI = process.env.MONGODB_URI;
-
 console.log("connecting to", MONGODB_URI);
 
 mongoose
@@ -26,13 +23,13 @@ mongoose
     });
 
 // let persons = [
-//     {
-//         name: "Arto Hellas",
-//         phone: "040-123543",
-//         street: "Tapiolankatu 5 A",
-//         city: "Espoo",
-//         id: "3d594650-3436-11e9-bc57-8b80ba54c431",
-//     },
+// {
+//     name: "Arto Hellas",
+//     phone: "040-123543",
+//     street: "Tapiolankatu 5 A",
+//     city: "Espoo",
+//     _id:  "3d594650-3436-11e9-bc57-8b80ba54c431"
+// },
 //     {
 //         name: "Matti Luukkainen",
 //         phone: "040-432342",
@@ -210,7 +207,7 @@ const resolvers = {
                 id: user._id,
             };
 
-            return { value: jwt.sign(userForToken, process.env.JWT_SECRET) };
+            return { value: jwt.sign(userForToken, process.env.SECRET) };
         },
         addAsFriend: async (root, args, { currentUser }) => {
             const isFriend = (person) =>
@@ -248,7 +245,7 @@ startStandaloneServer(server, {
         if (auth && auth.startsWith("Bearer ")) {
             const decodedToken = jwt.verify(
                 auth.substring(7),
-                process.env.JWT_SECRET
+                process.env.SECRET
             );
             const currentUser = await User.findById(decodedToken.id).populate(
                 "friends"
