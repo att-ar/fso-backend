@@ -220,18 +220,38 @@ const resolvers = {
         addBook: async (root, args) => {
             const { author: authorName, ...argsNew } = args;
             const book = new Book({ ...argsNew });
-            //recall that in addBook, book.author is just a string, not object
-            let bookAuthor = await Author.findOne({ name: authorName });
-            if (!bookAuthor) {
-                bookAuthor = new Author({ name: authorName });
-                //save() resolves to the document that is saved
-                // need this because it gets the author's id
-                bookAuthor = await bookAuthor.save();
+            try {
+                //recall that in addBook, book.author is just a string, not object
+                let bookAuthor = await Author.findOne({ name: authorName });
+                if (!bookAuthor) {
+                    try {
+                        bookAuthor = new Author({ name: authorName });
+                        //save() resolves to the document that is saved
+                        // need this because it gets the author's id
+                        bookAuthor = await bookAuthor.save();
+                    } catch (error) {
+                        throw new GraphQLError("Saving author failed", {
+                            extensions: {
+                                code: "BAD_USER_INPUT",
+                                invalidArgs: args.author,
+                                error,
+                            },
+                        });
+                    }
+                }
+                //respecting the mongoose schema for Book in ./models/book.js
+                book.author = bookAuthor;
+                await book.save();
+            } catch (error) {
+                throw new GraphQLError("Saving book failed", {
+                    extensions: {
+                        code: "BAD_USER_INPUT",
+                        invalidArgs: args.name,
+                        error,
+                    },
+                });
             }
-            //respecting the mongoose schema for Book
-            // ./models/book.js
-            book.author = bookAuthor;
-            await book.save();
+
             return book;
         },
     },
