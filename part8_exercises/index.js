@@ -155,9 +155,9 @@ const findBy = (args) => {
     const filter = {};
     Object.keys(args).forEach((k) => {
         if (k === "genre") {
-            filter.genres = { $all: args.k };
+            filter.genres = { $all: args[k] };
         } else {
-            filter.k = args.k;
+            filter[k] = args[k];
         }
     });
     return filter;
@@ -167,8 +167,14 @@ const resolvers = {
     Query: {
         bookCount: async () => Book.count(),
         allBooks: async (root, args) => {
-            if (!args.author && !args.genre) return Book.find({});
-            return Book.find(findBy(args));
+            if (!args.author && !args.genre)
+                return Book.find({}).populate("author");
+            if (args.author) {
+                const aId = await Author.findOne({ name: args.author });
+                args.author = aId._id.toString();
+            }
+            const filter = await findBy(args);
+            return Book.find(filter).populate("author");
         },
         authorCount: async () => Author.count(),
         allAuthors: async () => Author.find({}),
@@ -209,6 +215,7 @@ const resolvers = {
                     },
                 });
             }
+            return author;
         },
         addBook: async (root, args) => {
             const { author: authorName, ...argsNew } = args;
