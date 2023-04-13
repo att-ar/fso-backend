@@ -101,6 +101,10 @@ mongoose
 // ];
 
 const typeDefs = `
+    input BookFilter {
+        author: String
+        genre: String
+    }
     type User {
         username: String!
         favoriteGenre: String!
@@ -113,9 +117,8 @@ const typeDefs = `
         bookCount: Int!
         authorCount: Int!
         allBooks(
-            author: String,
-            genre: String
-            ): [Book]
+            bookFilter: BookFilter
+            ): [Book]!
         allAuthors: [Author!]
         me: User
     }
@@ -184,14 +187,13 @@ const findBy = (args) => {
 const resolvers = {
     Query: {
         bookCount: async () => Book.count(),
-        allBooks: async (root, args) => {
-            if (!args.author && !args.genre)
-                return Book.find({}).populate("author");
-            if (args.author) {
-                const aId = await Author.findOne({ name: args.author });
-                args.author = aId._id.toString();
+        allBooks: async (root, { bookFilter }) => {
+            if (bookFilter === {}) return Book.find({}).populate("author");
+            if (bookFilter.author) {
+                const aId = await Author.findOne({ name: bookFilter.author });
+                bookFilter.author = aId._id.toString();
             }
-            const filter = await findBy(args);
+            const filter = await findBy(bookFilter);
             return Book.find(filter).populate("author");
         },
         authorCount: async () => Author.count(),
