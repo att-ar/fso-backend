@@ -131,7 +131,7 @@ const resolvers = {
                     },
                 });
             }
-
+            pubsub.publish("BOOK_ADDED", { bookAdded: book });
             return book;
         },
         createUser: async (root, args) => {
@@ -167,6 +167,11 @@ const resolvers = {
             };
 
             return { value: jwt.sign(userForToken, process.env.SECRET) };
+        },
+    },
+    Subscription: {
+        bookAdded: {
+            subscribe: () => pubsub.asyncIterator("BOOK_ADDED"),
         },
     },
 };
