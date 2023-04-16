@@ -1,3 +1,5 @@
+import { isNotNumber } from "./utils";
+
 interface Summary {
     periodLength: number;
     trainingDays: number;
@@ -8,7 +10,11 @@ interface Summary {
     average: number;
 }
 
-type Rating = { success: boolean; rating: number; ratingDescription: string };
+interface Rating {
+    success: boolean;
+    rating: number;
+    ratingDescription: string;
+}
 
 const calcRating = (target: number, average: number): Rating => {
     const difference = target - average;
@@ -46,4 +52,27 @@ const calculateExercises = (data: number[], target: number): Summary => {
     };
 };
 
-console.log(calculateExercises([3, 4, 2, 4.5, 0, 3, 1], 2));
+try {
+    if (process.argv[3] === undefined) {
+        //this prevents data of length 0
+        //whether or not a target was passed doesn't matter if this fails
+        throw new Error("insufficient arguments were passed");
+    }
+    const target: number = Number(process.argv[2]);
+    const data: number[] = process.argv.slice(3).map((arg) => Number(arg));
+    if (isNotNumber(target)) {
+        throw new Error("target must be a number");
+    }
+    data.forEach((hour) => {
+        if (isNotNumber(hour)) {
+            throw new Error("data points must be numbers");
+        }
+    });
+    console.log(calculateExercises(data, target));
+} catch (error: unknown) {
+    let errorMessage = "Something went wrong: ";
+    if (error instanceof Error) {
+        errorMessage += error.message;
+    }
+    console.log(errorMessage);
+}

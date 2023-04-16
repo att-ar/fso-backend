@@ -1,3 +1,5 @@
+import { isNotNumber } from "./utils";
+
 const calculateBmi = (height: number, weight: number): string => {
     //toFixed returns a string!!
     const bmi: number = Number((weight / (height / 100) ** 2).toFixed(1));
@@ -20,4 +22,23 @@ const calculateBmi = (height: number, weight: number): string => {
     } else return "Obese (Class III)";
 };
 
-console.log(calculateBmi(183, 63));
+try {
+    if (process.argv[2] === undefined || process.argv[3] === undefined) {
+        throw new Error(
+            "Missing argument(s), need height (cm) and weight (kg)"
+        );
+    }
+    const height: number = Number(process.argv[2]);
+    const weight: number = Number(process.argv[3]);
+    if (isNotNumber(height) || isNotNumber(weight)) {
+        throw new Error("Both arguments must be numbers");
+    }
+    if (weight === 0) throw new Error("Division by Zero");
+    console.log(calculateBmi(height, weight));
+} catch (error: unknown) {
+    let errorMessage = "Something went wrong: ";
+    if (error instanceof Error) {
+        errorMessage += error.message;
+    }
+    console.log(errorMessage);
+}
