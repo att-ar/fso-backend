@@ -1,0 +1,17 @@
+{
+    "name": "part9_notes",
+    "version": "0.0.1",
+    "description": "FSO part 9 Typescript",
+    "main": "index.js",
+    "scripts": {
+        "ts-node": "ts-node",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "multiply": "ts-node multiplier.ts",
+        "calculate": "ts-node calculator.ts"
+    },
+    "author": "A",
+    "license": "MIT",
+    "devDependencies": {
+        "ts-node": "^10.9.1"
+    }
+}
