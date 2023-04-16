@@ -1,5 +1,11 @@
 import { isNotNumber } from "./utils";
 
+interface bmiObject {
+    height: number;
+    weight: number;
+    bmi: string;
+}
+
 const calculateBmi = (height: number, weight: number): string => {
     //toFixed returns a string!!
     const bmi: number = Number((weight / (height / 100) ** 2).toFixed(1));
@@ -22,6 +28,26 @@ const calculateBmi = (height: number, weight: number): string => {
     } else return "Obese (Class III)";
 };
 
+const bmiCalculator = (height: number, weight: number): bmiObject | string => {
+    try {
+        if (isNotNumber(height) || isNotNumber(weight)) {
+            throw new Error("Both arguments must be numbers");
+        }
+        if (weight === 0) throw new Error("Division by Zero");
+        return {
+            height,
+            weight,
+            bmi: calculateBmi(height, weight),
+        };
+    } catch (error: unknown) {
+        let errorMessage = "Something went wrong: ";
+        if (error instanceof Error) {
+            errorMessage += error.message;
+        }
+        return errorMessage;
+    }
+};
+
 try {
     if (process.argv[2] === undefined || process.argv[3] === undefined) {
         throw new Error(
@@ -42,3 +68,5 @@ try {
     }
     console.log(errorMessage);
 }
+
+export default bmiCalculator;

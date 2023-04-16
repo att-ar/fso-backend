@@ -2,16 +2,24 @@
     "name": "part9_notes",
     "version": "0.0.1",
     "description": "FSO part 9 Typescript",
-    "main": "index.js",
+    "main": "index.ts",
     "scripts": {
         "ts-node": "ts-node",
         "test": "echo \"Error: no test specified\" && exit 1",
         "multiply": "ts-node multiplier.ts",
-        "calculate": "ts-node calculator.ts"
+        "calculate": "ts-node calculator.ts",
+        "start": "ts-node index.ts",
+        "dev": "ts-node-dev index.ts"
     },
     "author": "A",
     "license": "MIT",
     "devDependencies": {
-        "ts-node": "^10.9.1"
+        "@types/express": "^4.17.17",
+        "@types/node": "^18.15.11",
+        "ts-node": "^10.9.1",
+        "ts-node-dev": "^2.0.0"
+    },
+    "dependencies": {
+        "express": "^4.18.2"
     }
 }
