@@ -58,7 +58,7 @@ try {
         //whether or not a target was passed doesn't matter if this fails
         throw new Error("insufficient arguments were passed");
     }
-    const target: number = Number(process.argv[2]);
+    const target = Number(process.argv[2]);
     const data: number[] = process.argv.slice(3).map((arg) => Number(arg));
     if (isNotNumber(target)) {
         throw new Error("target must be a number");
@@ -76,3 +76,5 @@ try {
     }
     console.log(errorMessage);
 }
+
+export default calculateExercises;

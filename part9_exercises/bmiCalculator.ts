@@ -8,7 +8,7 @@ interface bmiObject {
 
 const calculateBmi = (height: number, weight: number): string => {
     //toFixed returns a string!!
-    const bmi: number = Number((weight / (height / 100) ** 2).toFixed(1));
+    const bmi = Number((weight / (height / 100) ** 2).toFixed(1));
     //using if-immediate
     // https://stackoverflow.com/questions/6665997/switch-statement-for-greater-than-less-than
     if (bmi < 16.0) {
@@ -54,8 +54,8 @@ try {
             "Missing argument(s), need height (cm) and weight (kg)"
         );
     }
-    const height: number = Number(process.argv[2]);
-    const weight: number = Number(process.argv[3]);
+    const height = Number(process.argv[2]);
+    const weight = Number(process.argv[3]);
     if (isNotNumber(height) || isNotNumber(weight)) {
         throw new Error("Both arguments must be numbers");
     }

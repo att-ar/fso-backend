@@ -1,6 +1,6 @@
 type Operation = "add" | "multiply" | "divide";
 
-const calculator = (a: number, b: number, text: Operation): number => {
+export const calculator = (a: number, b: number, text: Operation): number => {
     switch (text) {
         case "add":
             return a + b;
@@ -15,8 +15,8 @@ const calculator = (a: number, b: number, text: Operation): number => {
 };
 
 try {
-    const a: number = Number(process.argv[2]);
-    const b: number = Number(process.argv[3]);
+    const a = Number(process.argv[2]);
+    const b = Number(process.argv[3]);
     const text: string = process.argv[4];
     const validOperations: Operation[] = ["add", "multiply", "divide"];
     if (validOperations.includes(text as Operation)) {
