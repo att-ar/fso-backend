@@ -1,3 +1,9 @@
-// {
-//     "eslint.workingDirectories": ["./part9_notes", "./part9_exercises"]
-// }
+{
+    "eslint.workingDirectories": [
+        "./part9_notes/intro",
+        "./part9_notes/flight_diaries",
+        "./part9_exercises/intro",
+        "./part9_exercises/patientor/backend",
+        "./part9_exercises/patientor/frontend"
+    ]
+}

@@ -1,13 +1,12 @@
 {
-    "name": "flight_diaries",
+    "name": "patientor",
     "version": "0.0.1",
-    "description": "FSO part 9, ilari flight diaries",
-    "main": "index.ts",
+    "description": "FSO part 9 exercises patientor",
+    "main": "index.js",
     "scripts": {
         "start": "node build/index.js",
-        "test": "echo \"Error: no test specified\" && exit 1",
         "tsc": "tsc",
-        "dev": "ts-node-dev src/index.ts",
+        "dev": "ts-node-dev index.ts",
         "lint": "eslint --ext .ts ."
     },
     "author": "A",
