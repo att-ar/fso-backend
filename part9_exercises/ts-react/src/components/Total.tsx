@@ -1,5 +1,7 @@
-import { Courses } from "./Content";
-
+import CoursePart from "../types";
+export interface Courses {
+    courses: CoursePart[];
+}
 const Total = (props: Courses) => {
     return (
         <div>

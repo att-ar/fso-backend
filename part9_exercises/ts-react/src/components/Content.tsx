@@ -1,6 +1,7 @@
-type Course = { name: string; exerciseCount: number };
+import Part from "./Part";
+import CoursePart from "../types";
 export interface Courses {
-    courses: Course[];
+    courses: CoursePart[];
 }
 
 const Content = (props: Courses) => {
@@ -8,9 +9,7 @@ const Content = (props: Courses) => {
     return (
         <div>
             {courses.map((c) => (
-                <p key={c.name}>
-                    {c.name} {c.exerciseCount}
-                </p>
+                <Part key={c.name} course={c} />
             ))}
         </div>
     );
