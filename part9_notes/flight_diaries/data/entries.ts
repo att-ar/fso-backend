@@ -1,4 +1,4 @@
-import { DiaryEntry } from "../src/types";
+import { DiaryEntry } from "../../../part9_exercises/flight_diaries_frontend/src/types";
 import { toNewDiaryEntry } from "../src/utils";
 
 const data = [
