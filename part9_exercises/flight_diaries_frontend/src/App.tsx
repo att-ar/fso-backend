@@ -7,6 +7,10 @@ import {
 } from "./types";
 import { getAllDiaries, createDiary } from "./diaryService";
 
+const Notification = ({ errorMess }: { errorMess: string }) => {
+    return <p style={{ color: "red" }}>{errorMess}</p>;
+};
+
 const App = () => {
     const [diaries, setDiaries] = useState<NonSensitiveDiaryEntry[]>([]);
     const today = new Date();
@@ -19,6 +23,7 @@ const App = () => {
         Visibility.Good
     );
     const [newComment, setNewComment] = useState("");
+    const [errorMess, setErrorMess] = useState("");
 
     useEffect(() => {
         getAllDiaries().then((data) => {
@@ -36,14 +41,18 @@ const App = () => {
         };
         if (newComment !== "") interimDiary.comment = newComment;
         createDiary(interimDiary).then((data) => {
-            setDiaries(diaries.concat(data));
+            if (typeof data === "string") {
+                setErrorMess(data);
+                setTimeout(() => setErrorMess(""), 7000);
+            } else {
+                setDiaries(diaries.concat(data));
+            }
         });
-
-        // setNewNote("");
     };
     return (
         <div>
             <h2>Add new entry</h2>
+            {errorMess !== "" ? <Notification errorMess={errorMess} /> : null}
             <form onSubmit={noteCreation}>
                 <div>
                     {"Date: "}
