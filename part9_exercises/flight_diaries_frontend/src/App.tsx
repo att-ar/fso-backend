@@ -14,9 +14,9 @@ const Notification = ({ errorMess }: { errorMess: string }) => {
 const App = () => {
     const [diaries, setDiaries] = useState<NonSensitiveDiaryEntry[]>([]);
     const today = new Date();
-    const todayDate = `${today.getFullYear()}-${
-        today.getMonth() + 1
-    }-${today.getDate()}`;
+    const todayDate = `${today.getFullYear()}-${(today.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${today.getDate()}`;
     const [newDate, setNewDate] = useState(todayDate);
     const [newWeather, setNewWeather] = useState<Weather>(Weather.Sunny);
     const [newVisibility, setNewVisibility] = useState<Visibility>(
@@ -51,39 +51,101 @@ const App = () => {
     };
     return (
         <div>
-            <h2>Add new entry</h2>
+            <h2>Add New Entry</h2>
             {errorMess !== "" ? <Notification errorMess={errorMess} /> : null}
             <form onSubmit={noteCreation}>
                 <div>
-                    {"Date: "}
+                    <strong>{"Date: "}</strong>
                     <input
                         name="date"
+                        type="date"
                         value={newDate}
-                        onChange={(event) => setNewDate(event.target.value)}
-                    />
-                </div>
-                <div>
-                    {"Weather: "}
-                    <input
-                        name="weather"
-                        value={newWeather}
                         onChange={(event) => {
-                            setNewWeather(event.target.value as Weather);
+                            console.log(event.target.value);
+                            setNewDate(event.target.value);
                         }}
                     />
                 </div>
                 <div>
-                    {"Visibility: "}
+                    <strong>{"Weather: "}</strong>
+                    Sunny
                     <input
-                        name="visibility"
-                        value={newVisibility}
-                        onChange={(event) =>
-                            setNewVisibility(event.target.value as Visibility)
-                        }
+                        type="radio"
+                        name="weather"
+                        onChange={() => {
+                            setNewWeather(Weather.Sunny);
+                        }}
+                    />
+                    Rainy
+                    <input
+                        type="radio"
+                        name="weather"
+                        onChange={() => {
+                            setNewWeather(Weather.Rainy);
+                        }}
+                    />
+                    Cloudy
+                    <input
+                        type="radio"
+                        name="weather"
+                        onChange={() => {
+                            setNewWeather(Weather.Cloudy);
+                        }}
+                    />
+                    Stormy
+                    <input
+                        type="radio"
+                        name="weather"
+                        onChange={() => {
+                            setNewWeather(Weather.Stormy);
+                        }}
+                    />
+                    Windy
+                    <input
+                        type="radio"
+                        name="weather"
+                        onChange={() => {
+                            setNewWeather(Weather.Windy);
+                        }}
                     />
                 </div>
                 <div>
-                    {"Comment: "}
+                    <strong>{"Visibility: "}</strong>
+                    Great
+                    <input
+                        type="radio"
+                        name="visibilty"
+                        onChange={() => {
+                            setNewVisibility(Visibility.Great);
+                        }}
+                    />
+                    Good
+                    <input
+                        type="radio"
+                        name="visibilty"
+                        onChange={() => {
+                            setNewVisibility(Visibility.Good);
+                        }}
+                    />
+                    Ok
+                    <input
+                        type="radio"
+                        name="visibilty"
+                        onChange={() => {
+                            setNewVisibility(Visibility.Ok);
+                        }}
+                    />
+                    Poor
+                    <input
+                        type="radio"
+                        name="visibilty"
+                        onChange={() => {
+                            setNewVisibility(Visibility.Poor);
+                        }}
+                    />
+                </div>
+                <div>
+                    <strong>{"Comment: "}</strong>
                     <input
                         name="comment"
                         value={newComment}
@@ -92,14 +154,15 @@ const App = () => {
                 </div>
                 <button type="submit">add</button>
             </form>
+            <h2>Diary Entries</h2>
             <div style={{ paddingTop: 5 }}>
                 {diaries.map((d) => (
                     <span key={d.id}>
                         <strong>{d.date}</strong>
                         <p>
-                            {d.weather}
+                            Weather: {d.weather}
                             <br />
-                            {d.visibility}
+                            Visibility: {d.visibility}
                         </p>
                     </span>
                 ))}
